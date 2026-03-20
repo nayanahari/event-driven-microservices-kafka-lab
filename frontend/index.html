@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microservices Dashboard</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-hover: #334155;
+            --border: #334155;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #22c55e;
+            --error: #ef4444;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --radius: 12px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            background: linear-gradient(135deg, var(--primary), #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p { color: var(--text-muted); font-size: 0.95rem; }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card h2 .icon {
+            width: 28px; height: 28px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+        }
+
+        .icon-gateway { background: rgba(59,130,246,0.15); color: var(--primary); }
+        .icon-order { background: rgba(168,139,250,0.15); color: #a78bfa; }
+        .icon-log { background: rgba(34,197,94,0.15); color: var(--success); }
+
+        .status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .status-row:last-child { border-bottom: none; }
+
+        .status-label { color: var(--text-muted); font-size: 0.9rem; }
+        .status-value { font-weight: 500; font-size: 0.9rem; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-ok { background: rgba(34,197,94,0.15); color: var(--success); }
+        .badge-err { background: rgba(239,68,68,0.15); color: var(--error); }
+        .badge-wait { background: rgba(148,163,184,0.15); color: var(--text-muted); }
+
+        .dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .dot-ok { background: var(--success); }
+        .dot-err { background: var(--error); }
+        .dot-wait { background: var(--text-muted); }
+
+        label { display: block; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.4rem; }
+
+        textarea {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 0.75rem;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.85rem;
+            resize: vertical;
+            min-height: 90px;
+        }
+
+        textarea:focus { outline: none; border-color: var(--primary); }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.25rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .btn-outline:hover { background: var(--surface-hover); color: var(--text); }
+
+        .btn-row { display: flex; gap: 0.75rem; margin-top: 1rem; }
+
+        .config-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .config-row .field { flex: 1; }
+
+        .config-row input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 0.6rem 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        .config-row input:focus { outline: none; border-color: var(--primary); }
+
+        .log-area {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem;
+            max-height: 260px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.8rem;
+        }
+
+        .log-entry { padding: 0.3rem 0; border-bottom: 1px solid rgba(51,65,85,0.5); }
+        .log-entry:last-child { border-bottom: none; }
+        .log-time { color: var(--text-muted); margin-right: 0.5rem; }
+        .log-ok { color: var(--success); }
+        .log-err { color: var(--error); }
+        .log-empty { color: var(--text-muted); text-align: center; padding: 1.5rem; }
+
+        .form-group { margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Microservices Dashboard</h1>
+            <p>Event-Driven Architecture with Kafka</p>
+        </header>
+
+        <!-- Gateway Status -->
+        <div class="card">
+            <h2><span class="icon icon-gateway">&#9889;</span> Gateway Status</h2>
+            <div class="config-row">
+                <div class="field">
+                    <label>Gateway URL</label>
+                    <input type="text" id="gatewayUrl" placeholder="https://gateway.xxx.azurecontainerapps.io">
+                </div>
+                <button class="btn btn-outline" onclick="checkHealth()">Check</button>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Status</span>
+                <span id="gwStatus" class="badge badge-wait"><span class="dot dot-wait"></span> Not checked</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Service</span>
+                <span id="gwService" class="status-value">—</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Last checked</span>
+                <span id="gwTime" class="status-value">—</span>
+            </div>
+        </div>
+
+        <!-- Create Order -->
+        <div class="card">
+            <h2><span class="icon icon-order">&#128230;</span> Create Order</h2>
+            <div class="form-group">
+                <label>Order Payload (JSON)</label>
+                <textarea id="orderPayload">{
+  "product": "Laptop",
+  "quantity": 1,
+  "price": 1299.99
+}</textarea>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" id="sendBtn" onclick="sendOrder()">Send Order</button>
+            </div>
+        </div>
+
+        <!-- Event Log -->
+        <div class="card">
+            <h2><span class="icon icon-log">&#128196;</span> Event Log</h2>
+            <div class="log-area" id="logArea">
+                <div class="log-empty">No events yet. Send an order or check gateway health.</div>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-outline" onclick="clearLog()">Clear Log</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const logs = [];
+
+        function getGatewayUrl() {
+            return document.getElementById('gatewayUrl').value.replace(/\/+$/, '');
+        }
+
+        function addLog(message, type) {
+            const time = new Date().toLocaleTimeString();
+            logs.unshift({ time, message, type });
+            renderLogs();
+        }
+
+        function renderLogs() {
+            const area = document.getElementById('logArea');
+            if (logs.length === 0) {
+                area.innerHTML = '<div class="log-empty">No events yet. Send an order or check gateway health.</div>';
+                return;
+            }
+            area.innerHTML = logs.map(l =>
+                `<div class="log-entry"><span class="log-time">${l.time}</span><span class="log-${l.type}">${l.message}</span></div>`
+            ).join('');
+        }
+
+        function clearLog() {
+            logs.length = 0;
+            renderLogs();
+        }
+
+        async function checkHealth() {
+            const url = getGatewayUrl();
+            if (!url) { addLog('Please enter a Gateway URL first.', 'err'); return; }
+
+            const statusEl = document.getElementById('gwStatus');
+            const serviceEl = document.getElementById('gwService');
+            const timeEl = document.getElementById('gwTime');
+
+            statusEl.className = 'badge badge-wait';
+            statusEl.innerHTML = '<span class="dot dot-wait"></span> Checking...';
+            addLog(`Checking health at ${url}/health ...`, 'ok');
+
+            try {
+                const res = await fetch(`${url}/health`);
+                const data = await res.json();
+                statusEl.className = 'badge badge-ok';
+                statusEl.innerHTML = '<span class="dot dot-ok"></span> Healthy';
+                serviceEl.textContent = 'api-gateway';
+                timeEl.textContent = new Date().toLocaleString();
+                addLog(`Gateway is healthy: ${JSON.stringify(data)}`, 'ok');
+            } catch (err) {
+                statusEl.className = 'badge badge-err';
+                statusEl.innerHTML = '<span class="dot dot-err"></span> Unreachable';
+                serviceEl.textContent = '—';
+                timeEl.textContent = new Date().toLocaleString();
+                addLog(`Health check failed: ${err.message}`, 'err');
+            }
+        }
+
+        async function sendOrder() {
+            const url = getGatewayUrl();
+            if (!url) { addLog('Please enter a Gateway URL first.', 'err'); return; }
+
+            const btn = document.getElementById('sendBtn');
+            const payload = document.getElementById('orderPayload').value;
+
+            try { JSON.parse(payload); } catch {
+                addLog('Invalid JSON payload. Please fix and retry.', 'err');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            addLog(`Sending order to ${url}/orders ...`, 'ok');
+
+            try {
+                const res = await fetch(`${url}/orders`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: payload
+                });
+                const text = await res.text();
+                addLog(`Order response (${res.status}): ${text}`, res.ok ? 'ok' : 'err');
+            } catch (err) {
+                addLog(`Order failed: ${err.message}`, 'err');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Send Order';
+            }
+        }
+    </script>
+</body>
+</html>
